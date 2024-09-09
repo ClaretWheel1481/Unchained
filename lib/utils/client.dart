@@ -28,7 +28,7 @@ bool saveFile(String remoteAddr, token, localAddr) {
     final content = '''
 [client]
 remote_addr = "$remoteAddr"
-[client.services.my_nas_ssh]
+[client.services.server]
 token = "$token"
 local_addr = "$localAddr"
 ''';
