@@ -1,9 +1,9 @@
 import 'dart:io';
 
-// final Path = "data/flutter_assets/assets/";
-final Path = "assets/";
-
 // TODO: 编译时记得修改
+final Path = "data/flutter_assets/assets/";
+// final Path = "assets/";
+
 Future<void> initClientToml() async {
   final file = File('${Path}client.toml');
   if (!await file.exists()) {
@@ -23,7 +23,6 @@ retry_interval = 1
   }
 }
 
-// TODO: 编译时记得修改
 bool saveFile(String remoteAddr, token, localAddr, type, bool nodelay,
     int retryInterval) {
   try {

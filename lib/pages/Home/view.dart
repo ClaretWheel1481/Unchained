@@ -34,7 +34,7 @@ class HomePageState extends State<HomePage> {
       _process = await Process.start(
         'cmd',
         ['/c', command],
-        workingDirectory: '${Path}', // TODO: 编译前修改
+        workingDirectory: '${Path}',
       );
       _process!.stdout.transform(utf8.decoder).listen((data) {
         setState(() {
@@ -62,7 +62,7 @@ class HomePageState extends State<HomePage> {
 
   Future<void> _readFile() async {
     try {
-      final file = File('${Path}client.toml'); // TODO: 编译前修改
+      final file = File('${Path}client.toml');
       final content = await file.readAsString();
       final tomlDocument = TomlDocument.parse(content);
       final tomlMap = tomlDocument.toMap();
@@ -132,21 +132,21 @@ class HomePageState extends State<HomePage> {
                 child: Column(
                   children: [
                     InfoLabel(
-                      label: '远程服务器地址：',
+                      label: '服务端地址',
                       child: TextBox(
                         controller: remoteAddrController,
                       ),
                     ),
                     const SizedBox(height: 20),
                     InfoLabel(
-                        label: '远程服务器Token：',
+                        label: '服务端Token',
                         child: PasswordBox(
                           revealMode: PasswordRevealMode.peekAlways,
                           controller: tokenController,
                         )),
                     const SizedBox(height: 20),
                     InfoLabel(
-                      label: '本地服务地址：',
+                      label: '需转发的服务地址',
                       child: TextBox(
                         controller: localAddrController,
                       ),
