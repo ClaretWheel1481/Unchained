@@ -2,6 +2,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:unchained/pages/Home/view.dart';
 import 'package:unchained/pages/Settings/view.dart';
+import 'package:unchained/utils/client.dart';
 
 class NavigationWidget extends StatefulWidget {
   const NavigationWidget({super.key});
@@ -45,7 +46,12 @@ class _NavigationWidgetState extends State<NavigationWidget> {
             SizedBox(
               width: 50,
               height: 60,
-              child: CloseWindowButton(),
+              child: CloseWindowButton(
+                onPressed: () async {
+                  await stopCommand();
+                  appWindow.close();
+                },
+              ),
             ),
           ],
         ),

@@ -1,11 +1,11 @@
 import 'dart:io';
 
-final buildPath = "data/flutter_assets/assets/";
-final debugPath = "assets/";
+// final Path = "data/flutter_assets/assets/";
+final Path = "assets/";
 
 // TODO: 编译时记得修改
 Future<void> initClientToml() async {
-  final file = File('${buildPath}client.toml');
+  final file = File('${Path}client.toml');
   if (!await file.exists()) {
     await file.create(recursive: true);
     await file.writeAsString('''
@@ -27,7 +27,7 @@ retry_interval = 1
 bool saveFile(String remoteAddr, token, localAddr, type, bool nodelay,
     int retryInterval) {
   try {
-    final file = File('${buildPath}client.toml');
+    final file = File('${Path}client.toml');
     final content = '''
 # client.toml
 [client]
@@ -45,4 +45,8 @@ retry_interval = $retryInterval
   } catch (e) {
     return false;
   }
+}
+
+Future<void> stopCommand() async {
+  await Process.start('taskkill', ['/F', '/IM', 'rathole.exe']);
 }

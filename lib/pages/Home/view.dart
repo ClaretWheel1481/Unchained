@@ -10,10 +10,10 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  HomePageState createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   final TextEditingController remoteAddrController = TextEditingController();
   final TextEditingController tokenController = TextEditingController();
   final TextEditingController localAddrController = TextEditingController();
@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
       _process = await Process.start(
         'cmd',
         ['/c', command],
-        workingDirectory: '${buildPath}', // TODO: 编译前修改
+        workingDirectory: '${Path}', // TODO: 编译前修改
       );
       _process!.stdout.transform(utf8.decoder).listen((data) {
         setState(() {
@@ -54,19 +54,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void stopCommand() async {
-    try {
-      await Process.start('taskkill', ['/F', '/IM', 'rathole.exe']);
-      setState(() {
-        terminalController.text += '\nProcess terminated.';
-      });
-    } catch (e) {
-      setState(() {
-        terminalController.text += '\nError terminating process: $e';
-      });
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -75,7 +62,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _readFile() async {
     try {
-      final file = File('${buildPath}client.toml'); // TODO: 编译前修改
+      final file = File('${Path}client.toml'); // TODO: 编译前修改
       final content = await file.readAsString();
       final tomlDocument = TomlDocument.parse(content);
       final tomlMap = tomlDocument.toMap();
