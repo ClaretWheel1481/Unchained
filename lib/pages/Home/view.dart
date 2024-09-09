@@ -18,7 +18,11 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController tokenController = TextEditingController();
   final TextEditingController localAddrController = TextEditingController();
   final TextEditingController terminalController = TextEditingController();
+  final TextEditingController retryIntervalController = TextEditingController();
   bool terminalVisible = false;
+  bool nodelay = false;
+  String type = 'tcp';
+  bool processing = false;
   Process? _process;
 
   void runCommand(String command) async {
@@ -28,9 +32,9 @@ class _HomePageState extends State<HomePage> {
 
     try {
       _process = await Process.start(
-        Platform.isWindows ? 'cmd' : 'sh',
-        Platform.isWindows ? ['/c', command] : ['-c', command],
-        workingDirectory: 'assets',
+        'cmd',
+        ['/c', command],
+        workingDirectory: '${buildPath}',
       );
       _process!.stdout.transform(utf8.decoder).listen((data) {
         setState(() {
@@ -50,11 +54,15 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void stopCommand() {
-    if (_process != null) {
-      _process!.kill();
+  void stopCommand() async {
+    try {
+      await Process.start('taskkill', ['/F', '/IM', 'rathole.exe']);
       setState(() {
         terminalController.text += '\nProcess terminated.';
+      });
+    } catch (e) {
+      setState(() {
+        terminalController.text += '\nError terminating process: $e';
       });
     }
   }
@@ -67,24 +75,29 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _readFile() async {
     try {
-      final file = File('assets/client.toml');
+      final file = File('${buildPath}client.toml');
       final content = await file.readAsString();
       final tomlDocument = TomlDocument.parse(content);
       final tomlMap = tomlDocument.toMap();
       final client = tomlMap['client'] as Map<String, dynamic>;
       final services = client['services'] as Map<String, dynamic>;
-      final myNasSsh = services['server'] as Map<String, dynamic>;
+      final localServices = services['services'] as Map<String, dynamic>;
 
       setState(() {
         remoteAddrController.text = client['remote_addr'] ?? '';
-        tokenController.text = myNasSsh['token'] ?? '';
-        localAddrController.text = myNasSsh['local_addr'] ?? '';
+        tokenController.text = localServices['token'] ?? '';
+        localAddrController.text = localServices['local_addr'] ?? '';
+        type = localServices['type'] ?? 'tcp';
+        nodelay = localServices['nodelay'] ?? false;
+        retryIntervalController.text =
+            localServices['retry_interval']?.toString() ?? '0';
       });
     } catch (e) {
       setState(() {
         remoteAddrController.text = 'Error reading file: $e';
         tokenController.text = 'Error reading file: $e';
         localAddrController.text = 'Error reading file: $e';
+        retryIntervalController.text = 'Error reading file: $e';
       });
     }
   }
@@ -93,128 +106,184 @@ class _HomePageState extends State<HomePage> {
     final hour = DateTime.now().hour;
     final userName = Platform.environment['USERNAME'] ?? '用户';
     if (hour < 11) {
-      return '早上好, $userName';
+      return '早上好, $userName！';
     } else if (hour < 14) {
-      return '中午好, $userName';
+      return '中午好, $userName！';
     } else if (hour < 18) {
-      return '下午好，$userName';
+      return '下午好，$userName！';
     } else {
-      return '晚上好, $userName';
+      return '晚上好, $userName！';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ScaffoldPage(
-        header: Padding(
-          padding: const EdgeInsets.only(left: 25.0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              getGreeting(),
-              style: FluentTheme.of(context)
-                  .typography
-                  .title
-                  ?.copyWith(fontSize: 38),
-            ),
+    return ScaffoldPage.scrollable(
+      header: Padding(
+        padding: const EdgeInsets.only(left: 25.0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            getGreeting(),
+            style: FluentTheme.of(context)
+                .typography
+                .title
+                ?.copyWith(fontSize: 38),
           ),
         ),
-        content: Column(
+      ),
+      children: [
+        const SizedBox(height: 30),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 30),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    padding: const EdgeInsets.only(left: 25, right: 100),
-                    child: Column(
-                      children: [
-                        InfoLabel(
-                          label: '远程服务器地址：',
-                          child: TextBox(
-                            controller: remoteAddrController,
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        InfoLabel(
-                          label: '远程服务器Token：',
-                          child: TextBox(
-                            controller: tokenController,
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        InfoLabel(
-                          label: '本地服务地址：',
-                          child: TextBox(
-                            controller: localAddrController,
-                          ),
-                        ),
-                      ],
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 100),
+                child: Column(
+                  children: [
+                    InfoLabel(
+                      label: '远程服务器地址：',
+                      child: TextBox(
+                        controller: remoteAddrController,
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    padding: const EdgeInsets.only(right: 25, top: 30),
-                    child: Column(
-                      children: [
-                        Terminal(
-                          controller: terminalController,
-                          visible: terminalVisible,
-                        ),
-                      ],
+                    const SizedBox(height: 20),
+                    InfoLabel(
+                      label: '远程服务器Token：',
+                      child: TextBox(
+                        controller: tokenController,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                    InfoLabel(
+                      label: '本地服务地址：',
+                      child: TextBox(
+                        controller: localAddrController,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.only(left: 310),
-              child: Row(
-                children: [
-                  FilledButton(
-                    child: const Text('保存'),
-                    onPressed: () {
-                      saveFile(remoteAddrController.text, tokenController.text,
-                              localAddrController.text)
-                          ? showContentDialog(context, "成功", "保存成功！")
-                          : showContentDialog(context, "错误", "保存失败，请重试！");
-                    },
-                  )
-                ],
               ),
             ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.only(left: 210),
-              child: Row(
-                children: [
-                  FilledButton(
-                    child: const Text('开始打洞'),
-                    onPressed: () {
-                      setState(() {
-                        terminalVisible = true;
-                      });
-                      runCommand('rathole.exe client.toml');
-                    },
-                  ),
-                  const SizedBox(width: 20),
-                  Button(
-                    child: const Text('停用'),
-                    onPressed: () {
-                      setState(() {
-                        terminalVisible = true;
-                      });
-                      stopCommand();
-                    },
-                  ),
-                ],
+            Expanded(
+              flex: 1,
+              child: Expander(
+                header: const Text('可选选项'),
+                content: Column(
+                  children: [
+                    Row(
+                      children: [
+                        InfoLabel(
+                          label: '协议',
+                          child: ComboBox<String>(
+                            value: type,
+                            items: ['tcp', 'udp']
+                                .map((type) => ComboBoxItem<String>(
+                                      value: type,
+                                      child: Text(type),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                type = value!;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        InfoLabel(
+                          label: '无延迟',
+                          child: ToggleSwitch(
+                            checked: nodelay,
+                            onChanged: (value) {
+                              setState(() {
+                                nodelay = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    InfoLabel(
+                      label: '重试间隔s',
+                      child: TextBox(
+                        controller: retryIntervalController,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
-        ));
+        ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            processing
+                ? const FilledButton(
+                    onPressed: null,
+                    child: Text('开始穿透'),
+                  )
+                : FilledButton(
+                    child: const Text('开始穿透'),
+                    onPressed: () {
+                      if (saveFile(
+                        remoteAddrController.text,
+                        tokenController.text,
+                        localAddrController.text,
+                        type,
+                        nodelay,
+                        int.tryParse(retryIntervalController.text) ?? 0,
+                      )) {
+                        setState(() {
+                          terminalVisible = true;
+                          processing = true;
+                        });
+                        runCommand('rathole.exe client.toml');
+                        showContentDialog(context, "通知",
+                            "请自行判断穿透是否成功（Control channel established代表成功），失败请停用后再重新穿透！");
+                      } else {
+                        showContentDialog(context, "错误", "配置保存失败，请重试！");
+                      }
+                    },
+                  ),
+            const SizedBox(
+              width: 10,
+            ),
+            processing
+                ? Button(
+                    child: const Text('停用'),
+                    onPressed: () {
+                      setState(() {
+                        terminalVisible = false;
+                        processing = false;
+                      });
+                      stopCommand();
+                      showContentDialog(context, "通知", "停用成功！");
+                    },
+                  )
+                : const Button(onPressed: null, child: Text('停用')),
+            const SizedBox(height: 20),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.only(right: 25),
+          child: Column(
+            children: [
+              Terminal(
+                controller: terminalController,
+                visible: terminalVisible,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

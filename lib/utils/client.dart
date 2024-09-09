@@ -1,36 +1,50 @@
 import 'dart:io';
 
-void initClientToml() async {
+final buildPath = "data/flutter_assets/assets/";
+final debugPath = "assets/";
+
+// TODO: 编译时记得修改
+Future<void> initClientToml() async {
   try {
-    final file = File('assets/client.toml');
+    final file = File('${buildPath}client.toml');
     if (!await file.exists()) {
       await file.create(recursive: true);
       await file.writeAsString('''
 # client.toml
 [client]
 remote_addr = ""
-[client.services.my_nas_ssh]
+
+[client.services.services]
 token = ""
 local_addr = ""
+type = "tcp"
+nodelay = true
+retry_interval = 1
 ''');
     } else {
       // TODO: 弹出错误提醒
     }
   } catch (e) {
-    print('创建 client.toml 文件时出错: $e');
     // TODO: 弹出错误提醒
   }
 }
 
-bool saveFile(String remoteAddr, token, localAddr) {
+// TODO: 编译时记得修改
+bool saveFile(String remoteAddr, token, localAddr, type, bool nodelay,
+    int retryInterval) {
   try {
-    final file = File('assets/client.toml');
+    final file = File('${buildPath}client.toml');
     final content = '''
+# client.toml
 [client]
 remote_addr = "$remoteAddr"
-[client.services.server]
+
+[client.services.services]
 token = "$token"
 local_addr = "$localAddr"
+type = "$type"
+nodelay = $nodelay
+retry_interval = $retryInterval
 ''';
     file.writeAsString(content);
     return true;
