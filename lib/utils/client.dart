@@ -5,11 +5,10 @@ final debugPath = "assets/";
 
 // TODO: 编译时记得修改
 Future<void> initClientToml() async {
-  try {
-    final file = File('${buildPath}client.toml');
-    if (!await file.exists()) {
-      await file.create(recursive: true);
-      await file.writeAsString('''
+  final file = File('${buildPath}client.toml');
+  if (!await file.exists()) {
+    await file.create(recursive: true);
+    await file.writeAsString('''
 # client.toml
 [client]
 remote_addr = ""
@@ -21,11 +20,6 @@ type = "tcp"
 nodelay = true
 retry_interval = 1
 ''');
-    } else {
-      // TODO: 弹出错误提醒
-    }
-  } catch (e) {
-    // TODO: 弹出错误提醒
   }
 }
 

@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
       _process = await Process.start(
         'cmd',
         ['/c', command],
-        workingDirectory: '${buildPath}',
+        workingDirectory: '${buildPath}', // TODO: 编译前修改
       );
       _process!.stdout.transform(utf8.decoder).listen((data) {
         setState(() {
@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _readFile() async {
     try {
-      final file = File('${buildPath}client.toml');
+      final file = File('${buildPath}client.toml'); // TODO: 编译前修改
       final content = await file.readAsString();
       final tomlDocument = TomlDocument.parse(content);
       final tomlMap = tomlDocument.toMap();
@@ -152,11 +152,11 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 20),
                     InfoLabel(
-                      label: '远程服务器Token：',
-                      child: TextBox(
-                        controller: tokenController,
-                      ),
-                    ),
+                        label: '远程服务器Token：',
+                        child: PasswordBox(
+                          revealMode: PasswordRevealMode.peekAlways,
+                          controller: tokenController,
+                        )),
                     const SizedBox(height: 20),
                     InfoLabel(
                       label: '本地服务地址：',
@@ -224,14 +224,10 @@ class _HomePageState extends State<HomePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            processing
-                ? const FilledButton(
-                    onPressed: null,
-                    child: Text('开始穿透'),
-                  )
-                : FilledButton(
-                    child: const Text('开始穿透'),
-                    onPressed: () {
+            FilledButton(
+              onPressed: processing
+                  ? null
+                  : () {
                       if (saveFile(
                         remoteAddrController.text,
                         tokenController.text,
@@ -251,23 +247,24 @@ class _HomePageState extends State<HomePage> {
                         showContentDialog(context, "错误", "配置保存失败，请重试！");
                       }
                     },
-                  ),
+              child: const Text('开始穿透'),
+            ),
             const SizedBox(
               width: 10,
             ),
-            processing
-                ? Button(
-                    child: const Text('停用'),
-                    onPressed: () {
+            Button(
+              onPressed: processing
+                  ? () {
                       setState(() {
                         terminalVisible = false;
                         processing = false;
                       });
                       stopCommand();
-                      showContentDialog(context, "通知", "停用成功！");
-                    },
-                  )
-                : const Button(onPressed: null, child: Text('停用')),
+                      showContentDialog(context, "通知", "已停止！");
+                    }
+                  : null,
+              child: const Text('停止'),
+            ),
             const SizedBox(height: 20),
           ],
         ),
