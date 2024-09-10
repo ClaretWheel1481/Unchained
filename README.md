@@ -12,4 +12,4 @@
 [Rathole]("https://github.com/rapiz1/rathole")
 
 ## 截图
-![Screenshot](/public/screenshot.png)
+![Screenshot](/public/Screenshot.png)
