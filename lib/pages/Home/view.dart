@@ -1,10 +1,11 @@
-import 'package:fluent_ui/fluent_ui.dart';
+import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'dart:io';
 import 'dart:convert';
 import 'package:toml/toml.dart';
 import 'package:unchained/utils/client.dart';
 import 'package:unchained/widgets/notification.dart';
 import 'package:unchained/widgets/terminal.dart';
+import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -105,14 +106,14 @@ class HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return ScaffoldPage.scrollable(
+    return fluent.ScaffoldPage.scrollable(
       header: Padding(
         padding: const EdgeInsets.only(left: 25.0),
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(
             getGreeting(),
-            style: FluentTheme.of(context)
+            style: fluent.FluentTheme.of(context)
                 .typography
                 .title
                 ?.copyWith(fontSize: 38),
@@ -131,23 +132,26 @@ class HomePageState extends State<HomePage> {
                 padding: const EdgeInsets.only(right: 100),
                 child: Column(
                   children: [
-                    InfoLabel(
+                    fluent.InfoLabel(
                       label: '服务端地址',
-                      child: TextBox(
+                      child: fluent.TextBox(
+                        enabled: !processing,
                         controller: remoteAddrController,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    InfoLabel(
+                    fluent.InfoLabel(
                         label: '服务端Token',
-                        child: PasswordBox(
-                          revealMode: PasswordRevealMode.peekAlways,
+                        child: fluent.PasswordBox(
+                          enabled: !processing,
+                          revealMode: fluent.PasswordRevealMode.peekAlways,
                           controller: tokenController,
                         )),
                     const SizedBox(height: 20),
-                    InfoLabel(
+                    fluent.InfoLabel(
                       label: '需转发的服务地址',
-                      child: TextBox(
+                      child: fluent.TextBox(
+                        enabled: !processing,
                         controller: localAddrController,
                       ),
                     ),
@@ -157,47 +161,66 @@ class HomePageState extends State<HomePage> {
             ),
             Expanded(
               flex: 1,
-              child: Expander(
+              child: fluent.Expander(
+                initiallyExpanded: true,
                 header: const Text('可选选项'),
                 content: Column(
                   children: [
                     Row(
                       children: [
-                        InfoLabel(
+                        fluent.InfoLabel(
                           label: '协议',
-                          child: ComboBox<String>(
-                            value: type,
-                            items: ['tcp', 'udp']
-                                .map((type) => ComboBoxItem<String>(
-                                      value: type,
-                                      child: Text(type),
-                                    ))
-                                .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                type = value!;
-                              });
-                            },
-                          ),
+                          child: fluent.ComboBox<String>(
+                              value: type,
+                              items: ['tcp', 'udp']
+                                  .map((type) => fluent.ComboBoxItem<String>(
+                                        value: type,
+                                        child: Text(type),
+                                      ))
+                                  .toList(),
+                              onChanged: !processing
+                                  ? (value) {
+                                      setState(() {
+                                        type = value!;
+                                      });
+                                    }
+                                  : null),
                         ),
                         const SizedBox(width: 15),
-                        InfoLabel(
-                          label: '无延迟',
-                          child: ToggleSwitch(
-                            checked: nodelay,
-                            onChanged: (value) {
-                              setState(() {
-                                nodelay = value;
-                              });
-                            },
-                          ),
-                        ),
+                        Row(
+                          children: [
+                            fluent.InfoLabel(
+                              isHeader: true,
+                              label: '无延迟',
+                              child: fluent.ToggleSwitch(
+                                  checked: nodelay,
+                                  onChanged: !processing
+                                      ? (value) {
+                                          setState(() {
+                                            nodelay = value;
+                                          });
+                                        }
+                                      : null),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(
+                                right: 20,
+                                bottom: 25,
+                              ),
+                              child: fluent.Tooltip(
+                                message: '通过降低一定带宽来减少延迟，关闭后带宽提高但延迟增加。',
+                                child: Icon(Icons.help),
+                              ),
+                            )
+                          ],
+                        )
                       ],
                     ),
                     const SizedBox(height: 10),
-                    InfoLabel(
+                    fluent.InfoLabel(
                       label: '重试间隔s',
-                      child: TextBox(
+                      child: fluent.TextBox(
+                        enabled: !processing,
                         controller: retryIntervalController,
                       ),
                     ),
@@ -208,52 +231,47 @@ class HomePageState extends State<HomePage> {
           ],
         ),
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FilledButton(
-              onPressed: processing
-                  ? null
-                  : () {
-                      if (saveFile(
-                        remoteAddrController.text,
-                        tokenController.text,
-                        localAddrController.text,
-                        type,
-                        nodelay,
-                        int.tryParse(retryIntervalController.text) ?? 0,
-                      )) {
-                        setState(() {
-                          terminalVisible = true;
-                          processing = true;
-                        });
-                        runCommand('rathole.exe client.toml');
-                        showContentDialog(context, "通知",
-                            "请自行判断穿透是否成功（Control channel established代表成功），失败请停用后再重新穿透！");
-                      } else {
-                        showContentDialog(context, "错误", "配置保存失败，请重试！");
-                      }
-                    },
-              child: const Text('开始穿透'),
-            ),
-            const SizedBox(
-              width: 10,
-            ),
-            Button(
-              onPressed: processing
-                  ? () {
-                      setState(() {
-                        terminalVisible = false;
-                        processing = false;
-                      });
-                      stopCommand();
-                      showContentDialog(context, "通知", "已停止！");
-                    }
-                  : null,
-              child: const Text('停止'),
-            ),
-            const SizedBox(height: 20),
-          ],
+        fluent.Align(
+          alignment: fluent.Alignment.centerRight,
+          child: processing
+              ? fluent.Button(
+                  onPressed: processing
+                      ? () {
+                          setState(() {
+                            terminalVisible = false;
+                            processing = false;
+                          });
+                          stopCommand();
+                          showContentDialog(context, "通知", "已停止！");
+                        }
+                      : null,
+                  child: const Text('停止穿透'),
+                )
+              : fluent.FilledButton(
+                  onPressed: processing
+                      ? null
+                      : () {
+                          if (saveFile(
+                            remoteAddrController.text,
+                            tokenController.text,
+                            localAddrController.text,
+                            type,
+                            nodelay,
+                            int.tryParse(retryIntervalController.text) ?? 0,
+                          )) {
+                            setState(() {
+                              terminalVisible = true;
+                              processing = true;
+                            });
+                            runCommand('rathole.exe client.toml');
+                            showContentDialog(context, "通知",
+                                "请自行判断穿透是否成功（Control channel established代表成功），失败请停用后再重新穿透！");
+                          } else {
+                            showContentDialog(context, "错误", "配置保存失败，请重试！");
+                          }
+                        },
+                  child: const Text('开始穿透'),
+                ),
         ),
         const SizedBox(height: 20),
         Container(

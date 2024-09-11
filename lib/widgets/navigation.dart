@@ -30,7 +30,8 @@ class _NavigationWidgetState extends State<NavigationWidget> {
   Widget build(BuildContext context) {
     return NavigationView(
       appBar: NavigationAppBar(
-        title: const Text('Unchained', style: TextStyle(fontSize: 16)),
+        leading: Icon(FluentIcons.network_tower),
+        title: const Text('Unchained'),
         automaticallyImplyLeading: false,
         actions: Row(
           mainAxisAlignment: MainAxisAlignment.end,
