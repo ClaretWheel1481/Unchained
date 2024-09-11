@@ -30,7 +30,7 @@ class _NavigationWidgetState extends State<NavigationWidget> {
   Widget build(BuildContext context) {
     return NavigationView(
       appBar: NavigationAppBar(
-        leading: Icon(FluentIcons.network_tower),
+        leading: const Icon(FluentIcons.virtual_network),
         title: const Text('Unchained'),
         automaticallyImplyLeading: false,
         actions: Row(
