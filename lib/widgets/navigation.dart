@@ -32,7 +32,6 @@ class _NavigationWidgetState extends State<NavigationWidget> {
       appBar: NavigationAppBar(
         leading: const Icon(FluentIcons.virtual_network),
         title: const Text('Unchained'),
-        automaticallyImplyLeading: false,
         actions: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [

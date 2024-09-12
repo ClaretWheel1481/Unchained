@@ -20,6 +20,8 @@ class HomePageState extends State<HomePage> {
   final TextEditingController localAddrController = TextEditingController();
   final TextEditingController terminalController = TextEditingController();
   final TextEditingController retryIntervalController = TextEditingController();
+  final TextEditingController servicesNameController = TextEditingController();
+
   bool terminalVisible = false;
   bool nodelay = false;
   String type = 'tcp';
@@ -69,9 +71,11 @@ class HomePageState extends State<HomePage> {
       final tomlMap = tomlDocument.toMap();
       final client = tomlMap['client'] as Map<String, dynamic>;
       final services = client['services'] as Map<String, dynamic>;
-      final localServices = services['services'] as Map<String, dynamic>;
+      final serviceName = services.keys.first;
+      final localServices = services[serviceName] as Map<String, dynamic>;
 
       setState(() {
+        servicesNameController.text = serviceName;
         remoteAddrController.text = client['remote_addr'] ?? '';
         tokenController.text = localServices['token'] ?? '';
         localAddrController.text = localServices['local_addr'] ?? '';
@@ -132,6 +136,14 @@ class HomePageState extends State<HomePage> {
                 padding: const EdgeInsets.only(right: 100),
                 child: Column(
                   children: [
+                    fluent.InfoLabel(
+                      label: '服务名称（需与服务端服务名称一致）',
+                      child: fluent.TextBox(
+                        enabled: !processing,
+                        controller: servicesNameController,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     fluent.InfoLabel(
                       label: '服务端地址',
                       child: fluent.TextBox(
@@ -208,7 +220,7 @@ class HomePageState extends State<HomePage> {
                                 bottom: 25,
                               ),
                               child: fluent.Tooltip(
-                                message: '通过降低一定带宽来减少延迟，关闭后带宽提高但延迟增加。',
+                                message: '通过降低部分带宽来减少延迟，关闭后带宽提高但延迟增加。',
                                 child: Icon(Icons.help),
                               ),
                             )
@@ -216,7 +228,7 @@ class HomePageState extends State<HomePage> {
                         )
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     fluent.InfoLabel(
                       label: '重试间隔s',
                       child: fluent.TextBox(
@@ -232,47 +244,47 @@ class HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 20),
         fluent.Align(
-          alignment: fluent.Alignment.centerRight,
-          child: processing
-              ? fluent.Button(
-                  onPressed: processing
-                      ? () {
+            alignment: fluent.Alignment.centerRight,
+            child: fluent.FilledButton(
+              onPressed: processing
+                  ? () {
+                      setState(() {
+                        terminalVisible = false;
+                        processing = false;
+                      });
+                      stopCommand();
+                      showContentDialog(context, "通知", "已停止！");
+                    }
+                  : () {
+                      if (servicesNameController.text.isEmpty ||
+                          remoteAddrController.text.isEmpty ||
+                          tokenController.text.isEmpty ||
+                          localAddrController.text.isEmpty) {
+                        showContentDialog(context, "错误", "请确保参数输入完整。");
+                      } else {
+                        if (saveFile(
+                          servicesNameController.text,
+                          remoteAddrController.text,
+                          tokenController.text,
+                          localAddrController.text,
+                          type,
+                          nodelay,
+                          int.tryParse(retryIntervalController.text) ?? 0,
+                        )) {
                           setState(() {
-                            terminalVisible = false;
-                            processing = false;
+                            terminalVisible = true;
+                            processing = true;
                           });
-                          stopCommand();
-                          showContentDialog(context, "通知", "已停止！");
+                          runCommand('rathole.exe client.toml');
+                          showContentDialog(context, "通知",
+                              "请自行判断穿透是否成功（Control channel established代表成功），失败请停用后再重新穿透！");
+                        } else {
+                          showContentDialog(context, "错误", "配置保存失败，请重试！");
                         }
-                      : null,
-                  child: const Text('停止穿透'),
-                )
-              : fluent.FilledButton(
-                  onPressed: processing
-                      ? null
-                      : () {
-                          if (saveFile(
-                            remoteAddrController.text,
-                            tokenController.text,
-                            localAddrController.text,
-                            type,
-                            nodelay,
-                            int.tryParse(retryIntervalController.text) ?? 0,
-                          )) {
-                            setState(() {
-                              terminalVisible = true;
-                              processing = true;
-                            });
-                            runCommand('rathole.exe client.toml');
-                            showContentDialog(context, "通知",
-                                "请自行判断穿透是否成功（Control channel established代表成功），失败请停用后再重新穿透！");
-                          } else {
-                            showContentDialog(context, "错误", "配置保存失败，请重试！");
-                          }
-                        },
-                  child: const Text('开始穿透'),
-                ),
-        ),
+                      }
+                    },
+              child: processing ? const Text('停止穿透') : const Text('开始穿透'),
+            )),
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.only(right: 25),

@@ -10,7 +10,7 @@ void showContentDialog(BuildContext context, String title, content) async {
       ),
       actions: [
         FilledButton(
-          child: const Text('好'),
+          child: const Text('好的'),
           onPressed: () {
             Navigator.pop(context);
           },

@@ -13,7 +13,7 @@ Future<void> initClientToml() async {
 [client]
 remote_addr = ""
 
-[client.services.services]
+[client.services.service]
 token = ""
 local_addr = ""
 type = "tcp"
@@ -23,7 +23,7 @@ retry_interval = 1
   }
 }
 
-bool saveFile(String remoteAddr, token, localAddr, type, bool nodelay,
+bool saveFile(String service, remoteAddr, token, localAddr, type, bool nodelay,
     int retryInterval) {
   try {
     final file = File('${Path}client.toml');
@@ -32,7 +32,7 @@ bool saveFile(String remoteAddr, token, localAddr, type, bool nodelay,
 [client]
 remote_addr = "$remoteAddr"
 
-[client.services.services]
+[client.services.$service]
 token = "$token"
 local_addr = "$localAddr"
 type = "$type"
