@@ -203,7 +203,7 @@ class HomePageState extends State<HomePage> {
                           children: [
                             fluent.InfoLabel(
                               isHeader: true,
-                              label: '无延迟',
+                              label: '延迟优化',
                               child: fluent.ToggleSwitch(
                                   checked: nodelay,
                                   onChanged: !processing
@@ -217,10 +217,10 @@ class HomePageState extends State<HomePage> {
                             const Padding(
                               padding: EdgeInsets.only(
                                 right: 20,
-                                bottom: 25,
+                                bottom: 23,
                               ),
                               child: fluent.Tooltip(
-                                message: '通过降低部分带宽来减少延迟，关闭后带宽提高但延迟增加。',
+                                message: '通过降低部分带宽来优化延迟，关闭后带宽提高但延迟增加。',
                                 child: Icon(Icons.help),
                               ),
                             )
@@ -230,7 +230,7 @@ class HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 20),
                     fluent.InfoLabel(
-                      label: '重试间隔s',
+                      label: '重试间隔(秒)',
                       child: fluent.TextBox(
                         enabled: !processing,
                         controller: retryIntervalController,
@@ -277,7 +277,7 @@ class HomePageState extends State<HomePage> {
                           });
                           runCommand('rathole.exe client.toml');
                           showContentDialog(context, "通知",
-                              "请自行判断穿透是否成功（Control channel established代表成功），失败请停用后再重新穿透！");
+                              "请自行判断穿透是否成功(出现Control channel established代表成功)");
                         } else {
                           showContentDialog(context, "错误", "配置保存失败，请重试！");
                         }

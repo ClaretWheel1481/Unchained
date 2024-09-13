@@ -8,10 +8,10 @@ class NavigationWidget extends StatefulWidget {
   const NavigationWidget({super.key});
 
   @override
-  _NavigationWidgetState createState() => _NavigationWidgetState();
+  NavigationWidgetState createState() => NavigationWidgetState();
 }
 
-class _NavigationWidgetState extends State<NavigationWidget> {
+class NavigationWidgetState extends State<NavigationWidget> {
   int _selectedIndex = 0;
 
   final List<NavigationPaneItem> _items = [

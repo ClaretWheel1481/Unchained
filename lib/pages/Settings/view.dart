@@ -43,7 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Container(
               padding: const EdgeInsets.only(left: 30),
               child:
-                  const Text("Unchained 1.0", style: TextStyle(fontSize: 13)),
+                  const Text("Unchained 1.1.0", style: TextStyle(fontSize: 13)),
             ),
             const SizedBox(height: 25),
             Row(children: [

@@ -17,7 +17,7 @@ class Terminal extends StatelessWidget {
           child: TextField(
             controller: controller,
             style: const TextStyle(color: Colors.white),
-            maxLines: 8,
+            maxLines: 10,
             readOnly: true,
             decoration: const InputDecoration(
               border: InputBorder.none,
