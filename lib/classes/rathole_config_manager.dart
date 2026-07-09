@@ -51,17 +51,20 @@ class RatholeConfigManager {
 
     return {
       'remoteAddr': remoteAddr,
+      'defaultToken': clientSection['default_token']?.toString() ?? '',
       'services': services,
     };
   }
 
   static Future<bool> saveRatholeConfigTo(String fullPath, String remoteAddr,
-      List<RatholeServiceConfig> services) async {
+      String defaultToken, List<RatholeServiceConfig> services) async {
     for (var s in services) {
       if (s.nameController.text.trim().isEmpty ||
-          s.tokenController.text.trim().isEmpty ||
           s.localAddrController.text.trim().isEmpty ||
           s.retryIntervalController.text.trim().isEmpty) {
+        return false;
+      }
+      if (defaultToken.isEmpty && s.tokenController.text.trim().isEmpty) {
         return false;
       }
     }
@@ -75,12 +78,18 @@ class RatholeConfigManager {
     final sb = StringBuffer();
     sb.writeln('[client]');
     sb.writeln('remote_addr = "${_escapeLiteral(remoteAddr)}"');
+    if (defaultToken.isNotEmpty) {
+      sb.writeln('default_token = "${_escapeLiteral(defaultToken)}"');
+    }
 
     for (var s in services) {
       final name = s.nameController.text.trim();
       final m = s.toMap();
       sb.writeln('\n[client.services.$name]');
-      sb.writeln('token = "${_escapeLiteral(m['token']!)}"');
+      final token = m['token']!.toString();
+      if (token != defaultToken) {
+        sb.writeln('token = "${_escapeLiteral(token)}"');
+      }
       sb.writeln('local_addr = "${_escapeLiteral(m['local_addr']!)}"');
       sb.writeln('type = "${_escapeLiteral(m['type']!)}"');
       sb.writeln('nodelay = ${m['nodelay']!}');

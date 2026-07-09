@@ -6,6 +6,7 @@ class RatholeServiceTile extends StatefulWidget {
   final int index;
   final Animation<double> animation;
   final bool processing;
+  final bool hasDefaultToken;
   final VoidCallback onDelete;
   final VoidCallback onUpdate;
 
@@ -15,6 +16,7 @@ class RatholeServiceTile extends StatefulWidget {
     required this.index,
     required this.animation,
     required this.processing,
+    this.hasDefaultToken = false,
     required this.onDelete,
     required this.onUpdate,
   });
@@ -24,6 +26,8 @@ class RatholeServiceTile extends StatefulWidget {
 }
 
 class _RatholeServiceTileState extends State<RatholeServiceTile> {
+  bool _showAdvanced = false;
+
   void _showDeleteConfirmationDialog() {
     showDialog(
       context: context,
@@ -51,6 +55,7 @@ class _RatholeServiceTileState extends State<RatholeServiceTile> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEnabled = !widget.processing;
+    final sectionColor = theme.colorScheme.primary;
 
     return SizeTransition(
       sizeFactor: widget.animation,
@@ -76,6 +81,14 @@ class _RatholeServiceTileState extends State<RatholeServiceTile> {
                 ],
               ),
               const SizedBox(height: 16),
+              Text(
+                '服务端配置（需与服务端一致）',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: sectionColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 enabled: isEnabled,
                 controller: widget.service.nameController,
@@ -86,22 +99,23 @@ class _RatholeServiceTileState extends State<RatholeServiceTile> {
                 ),
               ),
               const SizedBox(height: 12),
+              TextField(
+                enabled: isEnabled,
+                controller: widget.service.tokenController,
+                onChanged: (_) => widget.onUpdate(),
+                decoration: InputDecoration(
+                  labelText: widget.hasDefaultToken ? 'Token（可选）' : 'Token',
+                  hintText: widget.hasDefaultToken
+                      ? '未设置时将使用全局 Token'
+                      : null,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      enabled: isEnabled,
-                      controller: widget.service.localAddrController,
-                      onChanged: (_) => widget.onUpdate(),
-                      decoration: const InputDecoration(
-                        labelText: '服务地址',
-                        hintText: '例如: 127.0.0.1:8080',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
+                  const Text('协议类型'),
                   const SizedBox(width: 12),
-                  // 下拉菜单
                   DropdownButton<String>(
                     value: widget.service.type,
                     items: ['tcp', 'udp']
@@ -121,46 +135,86 @@ class _RatholeServiceTileState extends State<RatholeServiceTile> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              Text(
+                '本地配置',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: sectionColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 enabled: isEnabled,
-                controller: widget.service.tokenController,
+                controller: widget.service.localAddrController,
                 onChanged: (_) => widget.onUpdate(),
                 decoration: const InputDecoration(
-                  labelText: 'Token',
+                  labelText: '本地地址',
+                  hintText: '例如: 127.0.0.1:8080',
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Switch(
-                    value: widget.service.nodelay,
-                    onChanged: isEnabled
-                        ? (v) {
-                            setState(() => widget.service.nodelay = v);
-                            widget.onUpdate();
-                          }
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('延迟优化 (nodelay)'),
-                  const Spacer(),
-                  SizedBox(
-                    width: 150,
-                    child: TextField(
-                      enabled: isEnabled,
-                      controller: widget.service.retryIntervalController,
-                      onChanged: (_) => widget.onUpdate(),
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: '重试间隔 (秒)',
-                        border: OutlineInputBorder(),
+              const SizedBox(height: 4),
+              InkWell(
+                onTap: isEnabled
+                    ? () => setState(() => _showAdvanced = !_showAdvanced)
+                    : null,
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _showAdvanced
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '高级选项',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
+              if (_showAdvanced)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      Switch(
+                        value: widget.service.nodelay,
+                        onChanged: isEnabled
+                            ? (v) {
+                                setState(() => widget.service.nodelay = v);
+                                widget.onUpdate();
+                              }
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('延迟优化 (nodelay)'),
+                      const Spacer(),
+                      SizedBox(
+                        width: 150,
+                        child: TextField(
+                          enabled: isEnabled,
+                          controller: widget.service.retryIntervalController,
+                          onChanged: (_) => widget.onUpdate(),
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: '重试间隔 (秒)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),

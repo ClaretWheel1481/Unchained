@@ -23,6 +23,7 @@ class RatholeHomePage extends StatefulWidget {
 class RatholeHomePageState extends State<RatholeHomePage>
     with AutomaticKeepAliveClientMixin<RatholeHomePage> {
   final TextEditingController remoteAddrController = TextEditingController();
+  final TextEditingController defaultTokenController = TextEditingController();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final ScrollController _terminalScrollController = ScrollController();
 
@@ -50,6 +51,7 @@ class RatholeHomePageState extends State<RatholeHomePage>
     RatholeConfigManager.readRatholeConfigFrom(fullPath).then((config) {
       if (!mounted) return;
       remoteAddrController.text = config['remoteAddr'];
+      defaultTokenController.text = config['defaultToken'] ?? '';
       if (config['services'].isNotEmpty) {
         services = config['services'];
         for (int i = 0; i < services.length; i++) {
@@ -73,6 +75,7 @@ class RatholeHomePageState extends State<RatholeHomePage>
     _stderrSubscription?.cancel();
     _process?.kill();
     remoteAddrController.dispose();
+    defaultTokenController.dispose();
     _terminalScrollController.dispose();
     super.dispose();
   }
@@ -195,6 +198,7 @@ class RatholeHomePageState extends State<RatholeHomePage>
     final success = await RatholeConfigManager.saveRatholeConfigTo(
       fullPath,
       remoteAddrController.text.trim(),
+      defaultTokenController.text.trim(),
       services,
     );
 
@@ -237,17 +241,30 @@ class RatholeHomePageState extends State<RatholeHomePage>
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    enabled: !processing,
+                    controller: defaultTokenController,
+                    decoration: const InputDecoration(
+                      labelText: '全局 Token（可选）',
+                      hintText: '所有服务共用此 Token，无需逐服务填写',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
                   Expanded(
                     child: AnimatedList(
                       key: _listKey,
                       initialItemCount: services.length,
                       padding: const EdgeInsets.only(top: 4, bottom: 80),
                       itemBuilder: (context, index, animation) {
+                        final hasDefaultToken =
+                            defaultTokenController.text.trim().isNotEmpty;
                         return RatholeServiceTile(
                           service: services[index],
                           index: index,
                           animation: animation,
                           processing: processing,
+                          hasDefaultToken: hasDefaultToken,
                           onDelete: () => _removeService(index),
                           onUpdate: () {
                             if (mounted) setState(() {});
