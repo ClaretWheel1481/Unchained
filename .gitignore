@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/release
 
 /assets/rathole/client_*.toml
+
+# Agent
+AGENTS.md
+CLAUDE.md
+.claude
